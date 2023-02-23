@@ -1,9 +1,9 @@
 #!/bin/bash
 # Declare Vars
-MINIKUBE_VERSION='v1.25.0'
+KUBERNETES_VERSION='v1.26.1'
 FALCO_VERSION='3.0.0'
 FALCOSIDEKIK_VERSION='0.5.16'
-KUBEPROMETHEUSSTACK_VERSION='36.2.1'
+KUBEPROMETHEUSSTACK_VERSION='45.3.0'
 CLUSTER_NAME='falco'
 CONFIG_PATH='config'
 
@@ -35,7 +35,7 @@ _minikube() {
         --extra-config=apiserver.audit-webhook-batch-max-size=10                                  	\
         --extra-config=apiserver.audit-webhook-batch-max-wait=5s                                  	\
         --cpus=4                                                                                  	\
-        --kubernetes-version=${MINIKUBE_VERSION}                                                  	\
+        --kubernetes-version=${KUBERNETES_VERSION}                                                  \
         --container-runtime=containerd 															  	\
     	--docker-opt containerd=/var/run/containerd/containerd.sock 							  	\
 		--driver=virtualbox
