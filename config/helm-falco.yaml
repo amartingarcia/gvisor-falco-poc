@@ -1,19 +1,19 @@
 ---
-tty: true
-
-controller:
-  kind: daemonset
+#tty: true
+#
+#controller:
+#  kind: daemonset
 
 falcoctl:
-  artifact:
-    install:
-      enabled: true
-    follow:
-      enabled: true
+#  artifact:
+#    install:
+#      enabled: true
+#    follow:
+#      enabled: true
   config:
     artifact:
       install:
-        resolveDeps: false
+#        resolveDeps: false
         refs: [falco-rules:0, k8saudit-rules:0.5]
       follow:
         refs: [falco-rules:0, k8saudit-rules:0.5]
@@ -29,14 +29,15 @@ services:
 driver:
   enabled: false
 
-collectors:
-  enabled: true
+#collectors:
+#  enabled: true
 
 falco:
   rules_file:
     - /etc/falco/k8s_audit_rules.yaml
-    - /etc/falco/rules.d
-    - /etc/falco/falco_rules.yaml
+#    - /etc/falco/rules.d
+#    - /etc/falco/falco_rules.yaml
+
   plugins:
     - name: k8saudit
       library_path: libk8saudit.so
@@ -52,8 +53,8 @@ falco:
 
   time_format_iso_8601: true
   json_output: true
-  json_include_output_property: true
-  json_include_tags_property: true
+#  json_include_output_property: true
+#  json_include_tags_property: true
 
   http_output:
     enabled: true

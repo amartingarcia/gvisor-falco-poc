@@ -1,9 +1,9 @@
 #!/bin/bash
 # Declare Vars
 KUBERNETES_VERSION='v1.26.1'
-FALCO_VERSION='3.0.0'
-FALCOSIDEKIK_VERSION='0.5.16'
-KUBEPROMETHEUSSTACK_VERSION='45.3.0'
+FALCO_VERSION='3.1.3'
+FALCOSIDEKIK_VERSION='0.6.1'
+ALERTMANAGER_VERSION='0.29.0'
 CLUSTER_NAME='falco'
 CONFIG_PATH='config'
 
@@ -28,17 +28,17 @@ _minikube() {
   	sudo apt-get install virtualbox -y
 	
   	echo "[GLOBAL] Create Cluster on Minikube"
-	minikube start -p ${CLUSTER_NAME}                                                             	\
-        --extra-config=apiserver.audit-policy-file=/etc/ssl/certs/minikube-audit-policy.yaml      	\
-        --extra-config=apiserver.audit-log-path=-                                                 	\
-        --extra-config=apiserver.audit-webhook-config-file=/etc/ssl/certs/minikube-webhook-config 	\
-        --extra-config=apiserver.audit-webhook-batch-max-size=10                                  	\
-        --extra-config=apiserver.audit-webhook-batch-max-wait=5s                                  	\
-        --cpus=4                                                                                  	\
-        --kubernetes-version=${KUBERNETES_VERSION}                                                  \
-        --container-runtime=containerd 															  	\
-    	--docker-opt containerd=/var/run/containerd/containerd.sock 							  	\
-		--driver=virtualbox
+	minikube start -p ${CLUSTER_NAME}                                                             	    \
+        --extra-config=apiserver.audit-policy-file=/etc/ssl/certs/minikube-audit-policy.yaml      	    \
+        --extra-config=apiserver.audit-log-path=-                                                 	    \
+        --extra-config=apiserver.audit-webhook-config-file=/etc/ssl/certs/minikube-webhook-config.yaml 	\
+        --extra-config=apiserver.audit-webhook-batch-max-size=10                                  	    \
+        --extra-config=apiserver.audit-webhook-batch-max-wait=5s                                  	    \
+        --cpus=4                                                                                  	    \
+        --kubernetes-version=${KUBERNETES_VERSION}                                                      \
+        --driver=virtualbox                                                                             \
+		--container-runtime=containerd                   												\
+    	--docker-opt containerd=/var/run/containerd/containerd.sock
 	
   	echo "[GLOBAL] Enable ingress and gvisor on Minikube"
   	minikube addons enable ingress -p ${CLUSTER_NAME}
@@ -58,36 +58,39 @@ _falco() {
     		falcosecurity/falco                  \
       		-f ${CONFIG_PATH}/helm-falco.yaml    \
     		-n falco                             \
-    		--create-namespace                   \
+ 			--create-namespace                   \
       		--version ${FALCO_VERSION}
 }
 
-_kube_prometheus_stack() {
+_alertmanager() {
   	_minikube_ip
   
-  	echo "[FALCO] Install kube-prometheus-stack"
+  	echo "[FALCO] Install Alertmanager"
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 	helm repo update
 	helm upgrade --install                                                           \
-    		kube-prometheus-stack prometheus-community/kube-prometheus-stack         \
-			-n kube-prometheus-stack                                                 \
-    		--set grafana.enabled="false"                                            \
-			--set alertmanager.ingress.enabled="true"                                \
-			--set alertmanager.ingress.hosts="{alertmanager.${MINIKUBE_IP}.nip.io}"  \
+    		alertmanager prometheus-community/alertmanager                           \
+			-n alertmanager                                                          \
+			--set ingress.enabled="true"                                             \
+			--set ingress.hosts[0].host="alertmanager.${MINIKUBE_IP}.nip.io"         \
+			--set ingress.hosts[0].paths[0].path="/"                                 \
+			--set ingress.hosts[0].paths[0].pathType="ImplementationSpecific"        \
     		--create-namespace                                                       \
-    		--version ${KUBEPROMETHEUSSTACK_VERSION}
+    		--version ${ALERTMANAGER_VERSION}
 }
 
 _falco_sidekick() {
   	_minikube_ip
 
   	echo "[FALCO] Install falcosidekick"
-  	helm upgrade --install falcosidekick                                                \
-    		falcosecurity/falcosidekick                                                 \
-			-n falco -f ${CONFIG_PATH}/helm-sidekick.yaml                               \
-    		--set webui.enabled="true"                                                  \
-			--set webui.ingress.enabled="true"                                          \
-			--set webui.ingress.hosts[0].host="falcosidekick-ui.${MINIKUBE_IP}.nip.io"  \
+  	helm upgrade --install falcosidekick                                                                     \
+    		falcosecurity/falcosidekick                                                                      \
+			-n falco                                                                                         \
+			--set config.alertmanager.hostport="http://alertmanager.alertmanager.svc:9093"                   \
+    		--set webui.enabled="true"                                                                       \
+			--set webui.ingress.enabled="true"                                                               \
+			--set webui.ingress.hosts[0].host="falcosidekick-ui.${MINIKUBE_IP}.nip.io"                       \
+			--set webui.ingress.hosts[0].paths[0].path="/"                                                   \
 			--version ${FALCOSIDEKIK_VERSION}
 }
 
@@ -124,7 +127,7 @@ case ${ACTION} in
 
   'falco')
 	_falco
-    _kube_prometheus_stack
+    _alertmanager
     _falco_sidekick
   ;;
 
