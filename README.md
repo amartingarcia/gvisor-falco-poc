@@ -2,7 +2,7 @@
 ## gVisor
 ### Create a minikube cluster and configure it
 ```sh
-$ ./init.sh -a minikube
+$ ./init.sh -o minikube
 ```
 
 ### Create resources for gVisor

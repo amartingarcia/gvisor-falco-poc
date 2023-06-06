@@ -34,8 +34,8 @@ _minikube() {
         --extra-config=apiserver.audit-webhook-config-file=/etc/ssl/certs/minikube-webhook-config.yaml 	\
         --extra-config=apiserver.audit-webhook-batch-max-size=10                                  	    \
         --extra-config=apiserver.audit-webhook-batch-max-wait=5s                                  	    \
-        --cpus=4                                                                                  	    \
         --kubernetes-version=${KUBERNETES_VERSION}                                                      \
+        --cpus=4                                                                                  	    \
         --driver=virtualbox                                                                             \
 		--container-runtime=containerd                   												\
     	--docker-opt containerd=/var/run/containerd/containerd.sock
